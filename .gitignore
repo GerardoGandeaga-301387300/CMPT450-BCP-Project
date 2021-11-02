@@ -11,4 +11,4 @@ bin/
 obj/
 
 # Added for the project
-results*/ 
+results_*/ 
