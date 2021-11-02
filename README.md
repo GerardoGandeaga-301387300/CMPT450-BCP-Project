@@ -1,3 +1,19 @@
+
+# 450 Project Setup
+Make sure you are using a Linux OS, preferably Ubuntu
+
+```
+$ git clone git@github.com:GerardoGandeaga-301387300/CMPT450-BCP-Project.git
+$ cd CMPT450-BCP-Project/scripts
+Download the benchmark traces into /data/dpc3_traces. 
+$ sudo ./download_dpc3_traces.sh
+```
+I have modified the download script to only include the 5 traces we used in A2. If you want to add more then you can download them from here (https://hpca23.cse.tamu.edu/champsim-traces/speccpu/index.html). Careful, as they are large files! 
+
+Build and run instructions found here -> https://www.cs.sfu.ca/~ashriram/Courses/CS7ARCH/hw/hw2.html
+
+Note: Lets keep your benchmark results private, it is the folder (results_10M/) that has been added to the .gitignore. We can use the RESULTS/ folder later so compiling our final plots and benchmarking.
+
 <p align="center">
   <h1 align="center"> ChampSim </h1>
   <p> ChampSim is a trace-based simulator for a microarchitecture study. You can sign up to the public mailing list by sending an empty mail to champsim+subscribe@googlegroups.com. Traces for the 3rd Data Prefetching Championship (DPC-3) can be found from here (https://dpc3.compas.cs.stonybrook.edu/?SW_IS). A set of traces used for the 2nd Cache Replacement Championship (CRC-2) can be found from this link. (http://bit.ly/2t2nkUj) <p>

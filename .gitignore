@@ -9,3 +9,6 @@ inc/champsim.h.bak
 
 bin/
 obj/
+
+# Added for the project
+results*/ 
