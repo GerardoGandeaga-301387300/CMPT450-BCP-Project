@@ -10,7 +10,6 @@ int bimodal_table[NUM_CPUS][BIMODAL_TABLE_SIZE];
 #define RT_SIZE 1024
 #define PHR_SIZE 32
 #define MAX_COUNTER 7
-
 BPRU bpru(PHR_SIZE, RT_SIZE, MAX_COUNTER);
 
 void O3_CPU::initialize_branch_predictor()

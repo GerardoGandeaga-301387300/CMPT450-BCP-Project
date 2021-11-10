@@ -4,6 +4,9 @@
 #include <vector>
 #include <algorithm>
 
+#define TAG 0
+#define REV 1
+
 inline uint16_t clamp(int16_t value, uint16_t max)
 {
   if (value < 0)
@@ -78,20 +81,20 @@ public:
     MAX_COUNTER = max_counter;
     PHR = vector<uint8_t>(PHR_SIZE, 0);
     RT = new uint16_t*[2];
-    RT[0] = new uint16_t[RT_SIZE]; // tag line
-    RT[1] = new uint16_t[RT_SIZE]; // reversal counter line
+    RT[TAG] = new uint16_t[RT_SIZE]; // tag line
+    RT[REV] = new uint16_t[RT_SIZE]; // reversal counter line
 
     for (int i = 0; i < RT_SIZE; i++) 
     {
-      RT[0][i] = 0x0; // tag
-      RT[1][i] = 0x3; // counter -> set all predictions to be 100% correct
+      RT[TAG][i] = 0x0; // tag
+      RT[REV][i] = 0x2; // counter -> set all predictions to be 100% correct
     }
   }
 
   ~BPRU() 
   {
-    delete[] RT[0];
-    delete[] RT[1];
+    delete[] RT[TAG];
+    delete[] RT[REV];
     delete[] RT;
   }
 
@@ -105,14 +108,18 @@ public:
     uint64_t hash = RT_hash(ip);
 
     // find the value of the
-    uint8_t reversed = (RT[1][hash] & 0x2) >> 1;
+    uint8_t reversed = (RT[REV][hash] & 0x4) >> 3;
 
     // taken the prediction
     if (reversed == 0x0) 
+    {
       return pred;
+    }
     else
+    {
       // reverse the prediction
       return ~pred & 0x1;
+    }
   }
 
   /*
@@ -125,10 +132,11 @@ public:
     // update the RT
     uint64_t hash = RT_hash(ip);
     if (taken)
-      RT[1][hash]--;
+      RT[REV][hash]--;
     else 
-      RT[1][hash]++;
-    RT[1][hash] = clamp(RT[1][hash], MAX_COUNTER);
+      RT[REV][hash]++;
+    RT[REV][hash] = clamp(RT[REV][hash], MAX_COUNTER);
+    // std::cout << RT[REV][hash] << std::endl;
 
     // Update the PHR
     // The paper describes shifting the PHR to the left by 2 and shifting in the least 2 significant bits
