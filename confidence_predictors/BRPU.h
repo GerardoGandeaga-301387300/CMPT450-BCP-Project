@@ -44,6 +44,8 @@ private:
   vector<uint8_t> PHR;
   uint16_t **RT;
 
+  uint8_t recent_prediction;
+
   uint64_t PHR_value() 
   {
     uint64_t value = 0x0;
@@ -87,7 +89,7 @@ public:
     for (int i = 0; i < RT_SIZE; i++) 
     {
       RT[TAG][i] = 0x0; // tag
-      RT[REV][i] = 0x2; // counter -> set all predictions to be 100% correct
+      RT[REV][i] = 0x0; // counter -> set all predictions to be 100% correct
     }
   }
 
@@ -108,18 +110,22 @@ public:
     uint64_t hash = RT_hash(ip);
 
     // find the value of the
-    uint8_t reversed = (RT[REV][hash] & 0x4) >> 3;
+    uint8_t reversed = (RT[REV][hash] & 0x4) >> 2;
 
     // taken the prediction
     if (reversed == 0x0) 
     {
-      return pred;
+      recent_prediction = pred;
+      // return pred;
     }
     else
     {
       // reverse the prediction
-      return ~pred & 0x1;
+      recent_prediction = ~pred & 0x1;
+      // return ~pred & 0x1;
     }
+    // cout << "P  " << (uint64_t)ip << " " << PHR_value() << " " << hash << "  " << RT[REV][hash] << " " << (uint64_t)recent_prediction << endl;
+    return recent_prediction;
   }
 
   /*
@@ -131,12 +137,12 @@ public:
   {
     // update the RT
     uint64_t hash = RT_hash(ip);
-    if (taken)
+    if (taken == recent_prediction)
       RT[REV][hash]--;
     else 
       RT[REV][hash]++;
     RT[REV][hash] = clamp(RT[REV][hash], MAX_COUNTER);
-    // std::cout << RT[REV][hash] << std::endl;
+    // cout << "U  " <<(uint64_t)ip << " " << PHR_value() << " " << hash << "  " << RT[REV][hash] << " " << (uint64_t)taken << endl;
 
     // Update the PHR
     // The paper describes shifting the PHR to the left by 2 and shifting in the least 2 significant bits

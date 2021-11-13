@@ -10,8 +10,8 @@ int gs_history_table[NUM_CPUS][GS_HISTORY_TABLE_SIZE];
 int my_last_prediction[NUM_CPUS];
 
 // BPRU configuration
-#define RT_SIZE 256
-#define PHR_SIZE 16
+#define RT_SIZE 131072 // 2^15 32kb
+#define PHR_SIZE 64
 #define MAX_COUNTER 7
 BPRU bpru(PHR_SIZE, RT_SIZE, MAX_COUNTER);
 

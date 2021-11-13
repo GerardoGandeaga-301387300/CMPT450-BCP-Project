@@ -7,8 +7,8 @@
 int bimodal_table[NUM_CPUS][BIMODAL_TABLE_SIZE];
 
 // BPRU configuration
-#define RT_SIZE 1024
-#define PHR_SIZE 32
+#define RT_SIZE 131072 // 2^15 32kb
+#define PHR_SIZE 64
 #define MAX_COUNTER 7
 BPRU bpru(PHR_SIZE, RT_SIZE, MAX_COUNTER);
 
