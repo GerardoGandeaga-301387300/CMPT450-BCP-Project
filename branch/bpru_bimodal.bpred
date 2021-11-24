@@ -1,16 +1,28 @@
 #include "ooo_cpu.h"
-#include "../confidence_predictors/BRPU.h"
+#include "../confidence_predictors/BPRU.h"
 
-#define BIMODAL_TABLE_SIZE 16384
-#define BIMODAL_PRIME 16381
+// Scores:
+// 2^10: 94.7075%
+// 2^6: 94.652%
+
+#define BIMODAL_TABLE_SIZE 1024
+#define BIMODAL_PRIME 1021
 #define MAX_COUNTER 3
 int bimodal_table[NUM_CPUS][BIMODAL_TABLE_SIZE];
 
 // BPRU configuration
-#define RT_SIZE 131072 // 2^15 32kb
-#define PHR_SIZE 64
+#define RT_SIZE 1024
 #define MAX_COUNTER 7
-BPRU bpru(PHR_SIZE, RT_SIZE, MAX_COUNTER);
+#define COUNTER_MASK 4
+#define COUNTER_SHIFT 2
+#define RT_SET_ASSOCIATIVITY 8
+#define RT_N_TAG_BITS 13
+BPRU bpru(RT_SIZE, 
+          MAX_COUNTER, 
+          COUNTER_MASK, 
+          COUNTER_SHIFT, 
+          RT_SET_ASSOCIATIVITY, 
+          RT_N_TAG_BITS);
 
 void O3_CPU::initialize_branch_predictor()
 {

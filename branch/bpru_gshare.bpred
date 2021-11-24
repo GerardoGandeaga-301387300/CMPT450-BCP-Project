@@ -1,19 +1,30 @@
 #include "ooo_cpu.h"
-#include "../confidence_predictors/BRPU.h"
+#include "../confidence_predictors/BPRU.h"
 
 #define GLOBAL_HISTORY_LENGTH 14
 #define GLOBAL_HISTORY_MASK (1 << GLOBAL_HISTORY_LENGTH) - 1
 int branch_history_vector[NUM_CPUS];
 
-#define GS_HISTORY_TABLE_SIZE 16384
+// Score:
+// 2^14: 97.9427%
+// 2^10: 96.518%
+#define GS_HISTORY_TABLE_SIZE 1024
 int gs_history_table[NUM_CPUS][GS_HISTORY_TABLE_SIZE];
 int my_last_prediction[NUM_CPUS];
 
 // BPRU configuration
-#define RT_SIZE 131072 // 2^15 32kb
-#define PHR_SIZE 64
+#define RT_SIZE 1024
 #define MAX_COUNTER 7
-BPRU bpru(PHR_SIZE, RT_SIZE, MAX_COUNTER);
+#define COUNTER_MASK 4
+#define COUNTER_SHIFT 2
+#define RT_SET_ASSOCIATIVITY 8
+#define RT_N_TAG_BITS 13
+BPRU bpru(RT_SIZE, 
+          MAX_COUNTER, 
+          COUNTER_MASK, 
+          COUNTER_SHIFT, 
+          RT_SET_ASSOCIATIVITY, 
+          RT_N_TAG_BITS);
 
 void O3_CPU::initialize_branch_predictor()
 {
@@ -29,7 +40,7 @@ void O3_CPU::initialize_branch_predictor()
 unsigned int gs_table_hash(uint64_t ip, int bh_vector)
 {
     unsigned int hash = ip^(ip>>GLOBAL_HISTORY_LENGTH)^(ip>>(GLOBAL_HISTORY_LENGTH*2))^bh_vector;
-    hash = hash%GS_HISTORY_TABLE_SIZE;
+    hash = hash % GS_HISTORY_TABLE_SIZE;
 
     return hash;
 }

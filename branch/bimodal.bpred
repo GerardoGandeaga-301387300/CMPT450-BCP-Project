@@ -1,7 +1,14 @@
 #include "ooo_cpu.h"
 
-#define BIMODAL_TABLE_SIZE 16384
-#define BIMODAL_PRIME 16381
+// Scores:
+// 2^14: 94.7056%
+// 2^12: 94.6628%
+// 2^10: 94.7056%
+// 2^8:  94.7007%
+// 2^6:  89.4178%
+
+#define BIMODAL_TABLE_SIZE 64
+#define BIMODAL_PRIME 61
 #define MAX_COUNTER 3
 int bimodal_table[NUM_CPUS][BIMODAL_TABLE_SIZE];
 
