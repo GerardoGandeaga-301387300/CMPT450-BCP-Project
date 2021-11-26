@@ -1,14 +1,13 @@
 #include "ooo_cpu.h"
 
-// Scores:
-// 2^14: 94.7056%
-// 2^12: 94.6628%
-// 2^10: 94.7056%
-// 2^8:  94.7007%
-// 2^6:  89.4178%
-
-#define BIMODAL_TABLE_SIZE 64
-#define BIMODAL_PRIME 61
+// #define BIMODAL_TABLE_SIZE 64       // 2^6
+// #define BIMODAL_PRIME 61
+// #define BIMODAL_TABLE_SIZE 1024     // 2^10
+// #define BIMODAL_PRIME 1021
+// #define BIMODAL_TABLE_SIZE 16384    // 2^14
+// #define BIMODAL_PRIME 16381
+#define BIMODAL_TABLE_SIZE 16777216 // 2^24
+#define BIMODAL_PRIME 16777213
 #define MAX_COUNTER 3
 int bimodal_table[NUM_CPUS][BIMODAL_TABLE_SIZE];
 
@@ -36,4 +35,9 @@ void O3_CPU::last_branch_result(uint64_t ip, uint8_t taken)
         bimodal_table[cpu][hash]++;
     else if ((taken == 0) && (bimodal_table[cpu][hash] > 0))
         bimodal_table[cpu][hash]--;
+}
+
+// Always use branch predictor
+uint8_t O3_CPU::get_confidence(uint64_t ip, uint8_t taken){
+    return 1;
 }

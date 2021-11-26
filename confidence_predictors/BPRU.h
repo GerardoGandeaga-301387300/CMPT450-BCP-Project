@@ -138,10 +138,10 @@ public:
     uint64_t hash = RT_hash(ip);
     uint64_t tag = RT_tag(ip);
 
-    if (hash >= RT_SIZE)
-    {
-      cout << "hash size too large!" << hash << endl;
-    }
+    // if (hash >= RT_SIZE)
+    // {
+    //   cout << "hash size too large!" << hash << endl;
+    // }
 
     if (RT[TAG][hash] != tag)
     {
@@ -180,10 +180,10 @@ public:
     uint64_t hash = RT_hash(ip);
     uint64_t tag = RT_tag(ip);
 
-    if (RT[TAG][hash] != tag)
-    {
-      cout << "Tag not set before update! " << RT[TAG][hash] << " : " << tag << endl;
-    }
+    // if (RT[TAG][hash] != tag)
+    // {
+    //   // cout << "Tag not set before update! " << RT[TAG][hash] << " : " << tag << endl;
+    // }
 
     bool is_correct = IS_TAKEN(taken) == IS_TAKEN(recent_prediction);
     // if the BPRU reversed the last prediction...
