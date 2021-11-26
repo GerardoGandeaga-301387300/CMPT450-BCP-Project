@@ -48,6 +48,9 @@ public:
     SBI(uint16_t confidence, uint16_t prediction) {
       CONF_THRESHOLD = confidence;
       PRED_THRESHOLD = prediction;
+      for(int i = 0; i < CHT_SIZE; i++){
+        CHT[i] = 0;
+      }
     }
 
     ~SBI() {
@@ -71,6 +74,14 @@ public:
       } else {
         return SBI_inverse(ip,sbi_hash,prediction); 
       }
+    }
+
+    int get_confidence(uint64_t ip, int prediction) {
+      int sbi_hash = SBI_hash(ip,prediction);
+      if(CHT[sbi_hash] == 0 || CHT[sbi_hash] == 3){
+        return 1;
+      }
+      return 0;
     }
 
     void update_confidence(uint64_t ip, uint8_t taken) {

@@ -46,7 +46,7 @@ uint8_t O3_CPU::predict_branch(uint64_t ip)
     else
         prediction = 0;
 
-    prediction = sbi.predict(ip,prediction);
+    // prediction = sbi.predict(ip,prediction);
     my_last_prediction[cpu] = prediction;
     return prediction;    
 }
@@ -69,3 +69,9 @@ void O3_CPU::last_branch_result(uint64_t ip, uint8_t taken)
     branch_history_vector[cpu] |= taken;
     sbi.update_confidence(ip,taken);
 }
+
+// Always use branch predictor
+uint8_t O3_CPU::get_confidence(uint64_t ip, uint8_t pred){
+    return sbi.get_confidence(ip, pred);
+}
+

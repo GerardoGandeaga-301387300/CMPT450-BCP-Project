@@ -1,15 +1,22 @@
 #include "ooo_cpu.h"
+#include "../confidence_predictors/CBCP.h"
+#include "../confidence_predictors/SBI.h"
+#include "../confidence_predictors/EJRS.h"
+#include "../confidence_predictors/UDCE.h"
 
 #define GLOBAL_HISTORY_LENGTH 12
 #define GLOBAL_HISTORY_MASK (1 << GLOBAL_HISTORY_LENGTH) - 1
 int branch_history_vector[NUM_CPUS];
 
 // Score:
-// 2^14: 97.8996%
-// 2^10: 94.3525%
 #define GS_HISTORY_TABLE_SIZE 4096
 int gs_history_table[NUM_CPUS][GS_HISTORY_TABLE_SIZE];
 int my_last_prediction[NUM_CPUS];
+
+SBI estimator1(2,2);
+EJRS estimator2;
+UDCE estimator3;
+CBCP composite(estimator1, estimator2, estimator3);
 
 void O3_CPU::initialize_branch_predictor()
 {
@@ -19,7 +26,7 @@ void O3_CPU::initialize_branch_predictor()
     my_last_prediction[cpu] = 0;
 
     for(int i=0; i<GS_HISTORY_TABLE_SIZE; i++)
-        gs_history_table[cpu][i] = 2; // 2 is slightly taken
+        gs_history_table[cpu][i] = 2; // 2 is slightly taken    
 }
 
 unsigned int gs_table_hash(uint64_t ip, int bh_vector)
@@ -60,6 +67,7 @@ void O3_CPU::last_branch_result(uint64_t ip, uint8_t taken)
             gs_history_table[cpu][gs_hash]--;
     }
 
+    composite.update_confidence_estimators(ip, taken, my_last_prediction[cpu]);
     // update branch history vector
     branch_history_vector[cpu] <<= 1;
     branch_history_vector[cpu] &= GLOBAL_HISTORY_MASK;
@@ -67,6 +75,7 @@ void O3_CPU::last_branch_result(uint64_t ip, uint8_t taken)
 }
 
 // Always use branch predictor
-uint8_t O3_CPU::get_confidence(uint64_t ip, uint8_t taken){
-    return 1;
+uint8_t O3_CPU::get_confidence(uint64_t ip, uint8_t pred){
+    return composite.get_confidence(ip, pred);
+    // return 1;
 }
