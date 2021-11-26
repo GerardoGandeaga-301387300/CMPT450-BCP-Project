@@ -211,6 +211,7 @@ class O3_CPU {
 
     // branch predictor
     uint8_t predict_branch(uint64_t ip);
+    uint8_t get_confidence(uint64_t ip, uint8_t pred);
     void    initialize_branch_predictor(),
             last_branch_result(uint64_t ip, uint8_t taken);
 
