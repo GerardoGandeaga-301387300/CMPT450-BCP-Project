@@ -31,23 +31,23 @@ def get_stats(benchmark, size, model):
 				ipc = line[start:end]
 				stats["ipc"] = float(ipc)
 			# seek Accuracy
-			ipc_i = line.find(ACC_TEMPLATE)
-			if ipc_i != -1:
-				start = ipc_i + len(ACC_TEMPLATE)
+			acc_i = line.find(ACC_TEMPLATE)
+			if acc_i != -1:
+				start = acc_i + len(ACC_TEMPLATE)
 				end = line.find("%", start)
 				ipc = line[start:end]
 				stats["acc"] = float(ipc)
 			# seek MPKI
-			ipc_i = line.find(MPKI_TEMPLATE)
-			if ipc_i != -1:
-				start = ipc_i + len(MPKI_TEMPLATE)
+			mpki_i = line.find(MPKI_TEMPLATE)
+			if mpki_i != -1:
+				start = mpki_i + len(MPKI_TEMPLATE)
 				end = line.find(" ", start)
 				ipc = line[start:end]
 				stats["mpki"] = float(ipc)
 			# seek Avg ROB Occupancy
-			ipc_i = line.find(ROB_TEMPLATE)
-			if ipc_i != -1:
-				start = ipc_i + len(ROB_TEMPLATE)
+			rob_i = line.find(ROB_TEMPLATE)
+			if rob_i != -1:
+				start = rob_i + len(ROB_TEMPLATE)
 				end = line.find(" ", start)
 				ipc = line[start:end]
 				stats["rob"] = float(ipc)
@@ -56,15 +56,18 @@ def get_stats(benchmark, size, model):
 	return stats
 
 
+# TODO: Add your models here!
 # model names <BCP_><BP>
 MODELS = [
 	# vanilla models
 	"bimodal",
 	"gshare",
+	"tournament",
 
 	# with confidence predictors
 	"bpru_bimodal",
 	"bpru_gshare",
+	"bpru_tournament",
 ]
 # model sizes 2^N
 SIZES = [6, 10, 14, 24]
@@ -113,6 +116,4 @@ pprint.pprint(RESULTS["bpru_bimodal"])
 # iterate through results plot as needed
 # generate a new plot for each size
 # for size in SIZES:
-	
-
 

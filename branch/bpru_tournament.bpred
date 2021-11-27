@@ -1,11 +1,49 @@
 #include "ooo_cpu.h"
 #include <algorithm>
+#include "../confidence_predictors/BPRU.h"
+
+// Config
+// GLOBAL ====================================
+// #define PROGRAM_COUNTER_LENGTH 5 // 6
+// #define GLOBAL_HISTORY_LENGTH 1
+// #define PROGRAM_COUNTER_LENGTH 8 // 10
+// #define GLOBAL_HISTORY_LENGTH 2
+// #define PROGRAM_COUNTER_LENGTH 10 // 14
+// #define GLOBAL_HISTORY_LENGTH 4
+#define PROGRAM_COUNTER_LENGTH 18 // 24
+#define GLOBAL_HISTORY_LENGTH 6
+// LOCAL =====================================
+// #define LOCAL_HISTORY_LENGTH 6
+// #define LOCAL_HISTORY_LENGTH 10
+// #define LOCAL_HISTORY_LENGTH 14
+#define LOCAL_HISTORY_LENGTH 24
+// BIMODAL ===================================
+// #define BIMODAL_TABLE_SIZE 64       // 2^6
+// #define BIMODAL_PRIME 61
+// #define BIMODAL_TABLE_SIZE 1024     // 2^10
+// #define BIMODAL_PRIME 1021
+// #define BIMODAL_TABLE_SIZE 16384    // 2^14
+// #define BIMODAL_PRIME 16381
+#define BIMODAL_TABLE_SIZE 16777216 // 2^24
+#define BIMODAL_PRIME 16777213
+
+// BPRU configuration
+#define RT_SIZE 1024
+#define MAX_COUNTER 7
+#define COUNTER_MASK 4
+#define COUNTER_SHIFT 2
+#define RT_SET_ASSOCIATIVITY 8
+#define RT_N_TAG_BITS 13
+BPRU bpru(RT_SIZE, 
+          MAX_COUNTER, 
+          COUNTER_MASK, 
+          COUNTER_SHIFT, 
+          RT_SET_ASSOCIATIVITY, 
+          RT_N_TAG_BITS);
 
 // ---------------------------------------------------------------------------Global Predictor---------------------------------------------------------------------------
 // PC = n
 // GH = m
-#define PROGRAM_COUNTER_LENGTH 10
-#define GLOBAL_HISTORY_LENGTH 2
 #define GLOBAL_HISTORY_MASK (1 << GLOBAL_HISTORY_LENGTH) - 1
 #define PROGRAM_COUNTER_MASK ((1 << PROGRAM_COUNTER_LENGTH) - 1)
 int branch_history_vector[NUM_CPUS];
@@ -75,7 +113,6 @@ void gselect_last_branch_result(uint64_t ip, uint8_t taken, uint cpu)
 #define BRANCH_PC_LENGTH 10
 #define BRANCH_PC_MASK (1 << BRANCH_PC_LENGTH) - 1
 
-#define LOCAL_HISTORY_LENGTH 12
 #define LOCAL_HISTORY_SIZE uint(pow(2,BRANCH_PC_LENGTH))
 #define LOCAL_HISTORY_MASK (1 << LOCAL_HISTORY_LENGTH) - 1
 int local_history_vector[NUM_CPUS][LOCAL_HISTORY_SIZE];
@@ -148,8 +185,6 @@ void local_last_branch_result(uint64_t ip, uint8_t taken, uint cpu)
 #include "ooo_cpu.h"
 #include <algorithm>
 
-#define BIMODAL_TABLE_SIZE 4096
-#define BIMODAL_PRIME 4093
 #define MAX_COUNTER 3
 int8_t bimodal_table[NUM_CPUS][BIMODAL_TABLE_SIZE];
 
@@ -182,7 +217,7 @@ uint8_t O3_CPU::predict_branch(uint64_t ip)
         prediction = local_prediction;
     }
 
-    return prediction;
+    return bpru.reverse_prediction(ip, prediction);
 }
 
 void O3_CPU::last_branch_result(uint64_t ip, uint8_t taken)
@@ -201,4 +236,11 @@ void O3_CPU::last_branch_result(uint64_t ip, uint8_t taken)
 	    bimodal_table[cpu][hash]--;
 		clamp(bimodal_table[cpu][hash]);
 	}
+
+    bpru.update_RT(ip, taken);
+}
+
+// Always use branch predictor
+uint8_t O3_CPU::get_confidence(uint64_t ip, uint8_t taken){
+    return 1;
 }

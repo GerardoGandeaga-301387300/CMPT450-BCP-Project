@@ -1,0 +1,224 @@
+#include "ooo_cpu.h"
+#include <algorithm>
+
+// ---------------------------------------------------------------------------Global Predictor---------------------------------------------------------------------------
+// PC = n
+// GH = m
+// #define PROGRAM_COUNTER_LENGTH 5 // 6
+// #define GLOBAL_HISTORY_LENGTH 1
+// #define PROGRAM_COUNTER_LENGTH 8 // 10
+// #define GLOBAL_HISTORY_LENGTH 2
+// #define PROGRAM_COUNTER_LENGTH 10 // 14
+// #define GLOBAL_HISTORY_LENGTH 4
+#define PROGRAM_COUNTER_LENGTH 18 // 24
+#define GLOBAL_HISTORY_LENGTH 6
+#define GLOBAL_HISTORY_MASK (1 << GLOBAL_HISTORY_LENGTH) - 1
+#define PROGRAM_COUNTER_MASK ((1 << PROGRAM_COUNTER_LENGTH) - 1)
+int branch_history_vector[NUM_CPUS];
+
+#define GS_HISTORY_TABLE_SIZE uint(pow(2,GLOBAL_HISTORY_LENGTH+PROGRAM_COUNTER_LENGTH))
+int gs_history_table[NUM_CPUS][GS_HISTORY_TABLE_SIZE];
+int my_last_prediction_gs[NUM_CPUS];
+
+void initialize_gselect_predictor(uint cpu)
+{
+    cout << "CPU " << cpu << " GSELECT branch predictor" << endl;
+
+    branch_history_vector[cpu] = 0;
+    my_last_prediction_gs[cpu] = 0;
+
+    for(int i=0; i<GS_HISTORY_TABLE_SIZE; i++)
+        gs_history_table[cpu][i] = 2; // 2 is slightly taken
+}
+
+unsigned int gs_table_hash(uint64_t ip, int bh_vector)
+{
+    unsigned int hash = ((ip&PROGRAM_COUNTER_MASK) << GLOBAL_HISTORY_LENGTH) | (bh_vector&GLOBAL_HISTORY_MASK);
+
+    hash = hash%GS_HISTORY_TABLE_SIZE;
+
+    //printf("%d\n", hash);
+
+    return hash;
+}
+
+uint8_t gselect_predict_branch(uint64_t ip, uint cpu)
+{
+    int prediction = 1;
+
+    int gs_hash = gs_table_hash(ip, branch_history_vector[cpu]);
+
+    if(gs_history_table[cpu][gs_hash] >= 2)
+        prediction = 1;
+    else
+        prediction = 0;
+
+    my_last_prediction_gs[cpu] = prediction;
+
+    return prediction;
+}
+
+void gselect_last_branch_result(uint64_t ip, uint8_t taken, uint cpu)
+{
+    int gs_hash = gs_table_hash(ip, branch_history_vector[cpu]);
+
+    if(taken == 1) {
+        if(gs_history_table[cpu][gs_hash] < 3)
+            gs_history_table[cpu][gs_hash]++;
+    } else {
+        if(gs_history_table[cpu][gs_hash] > 0)
+            gs_history_table[cpu][gs_hash]--;
+    }
+
+    // update branch history vector
+    branch_history_vector[cpu] <<= 1;
+    branch_history_vector[cpu] &= GLOBAL_HISTORY_MASK;
+    branch_history_vector[cpu] |= taken;
+}
+
+// ---------------------------------------------------------------------------Local Predictor---------------------------------------------------------------------------
+
+#define BRANCH_PC_LENGTH 10
+#define BRANCH_PC_MASK (1 << BRANCH_PC_LENGTH) - 1
+
+// #define LOCAL_HISTORY_LENGTH 6
+// #define LOCAL_HISTORY_LENGTH 10
+// #define LOCAL_HISTORY_LENGTH 14
+#define LOCAL_HISTORY_LENGTH 24
+#define LOCAL_HISTORY_SIZE uint(pow(2,BRANCH_PC_LENGTH))
+#define LOCAL_HISTORY_MASK (1 << LOCAL_HISTORY_LENGTH) - 1
+int local_history_vector[NUM_CPUS][LOCAL_HISTORY_SIZE];
+
+#define GP_TABLE_SIZE uint(pow(2,LOCAL_HISTORY_LENGTH))
+int gp_table[NUM_CPUS][GP_TABLE_SIZE];
+int my_last_prediction_local[NUM_CPUS];
+
+void initialize_local_predictor(uint cpu)
+{
+    cout << "CPU " << cpu << " Local history branch predictor" << endl;
+
+    my_last_prediction_local[cpu] = 0;
+
+    for (int i = 0; i<BRANCH_PC_LENGTH; i++) {
+        local_history_vector[cpu][i] = 2;
+    }
+
+    for(int i=0; i<GP_TABLE_SIZE; i++)
+        gp_table[cpu][i] = 2; // 2 is slightly taken
+}
+
+unsigned int lh_table_hash(uint64_t ip)
+{
+    uint hash = (ip&BRANCH_PC_MASK)%GP_TABLE_SIZE;
+
+    //printf("%d\n", hash);
+
+    return hash;
+}
+
+uint8_t local_predict_branch(uint64_t ip, uint cpu)
+{
+    int prediction = 1;
+
+    uint lh_hash = lh_table_hash(ip);
+    uint gp_hash = local_history_vector[cpu][lh_hash] % GP_TABLE_SIZE;
+    
+    if(gp_table[cpu][gp_hash] >= 2)
+        prediction = 1;
+    else
+        prediction = 0;
+
+    my_last_prediction_local[cpu] = prediction;
+
+    return prediction;
+}
+
+void local_last_branch_result(uint64_t ip, uint8_t taken, uint cpu)
+{   
+    uint lh_hash = lh_table_hash(ip);
+    int gp_hash = local_history_vector[cpu][lh_hash] % GP_TABLE_SIZE;
+
+    if(taken == 1) {
+        if(gp_table[cpu][gp_hash] < 3)
+            gp_table[cpu][gp_hash]++;
+    } else {
+        if(gp_table[cpu][gp_hash] > 0)
+            gp_table[cpu][gp_hash]--;
+    }
+
+    // update branch history vector
+    local_history_vector[cpu][lh_hash] <<= 1;
+    local_history_vector[cpu][lh_hash] &= LOCAL_HISTORY_MASK;
+    local_history_vector[cpu][lh_hash] |= taken;
+}
+
+// ------------------------------------------------------------------------------------------Chooser----------------------------------------------------------------------------
+
+#include "ooo_cpu.h"
+#include <algorithm>
+
+// #define BIMODAL_TABLE_SIZE 64       // 2^6
+// #define BIMODAL_PRIME 61
+// #define BIMODAL_TABLE_SIZE 1024     // 2^10
+// #define BIMODAL_PRIME 1021
+// #define BIMODAL_TABLE_SIZE 16384    // 2^14
+// #define BIMODAL_PRIME 16381
+#define BIMODAL_TABLE_SIZE 16777216 // 2^24
+#define BIMODAL_PRIME 16777213
+#define MAX_COUNTER 3
+int8_t bimodal_table[NUM_CPUS][BIMODAL_TABLE_SIZE];
+
+inline void clamp(int8_t& value) {
+    if (value < 0) value = 0;
+    else if (value > MAX_COUNTER) value = MAX_COUNTER;
+}
+
+void O3_CPU::initialize_branch_predictor()
+{
+    cout << "CPU " << cpu << " Bimodal branch predictor" << endl;
+
+    initialize_gselect_predictor(cpu);
+    initialize_local_predictor(cpu);
+    for(int i = 0; i < BIMODAL_TABLE_SIZE; i++)
+        bimodal_table[cpu][i] = 2;
+}
+
+uint8_t O3_CPU::predict_branch(uint64_t ip)
+{
+    uint32_t hash = ip % BIMODAL_PRIME;
+
+    uint8_t global_prediction = gselect_predict_branch(ip, cpu);
+    uint8_t local_prediction = local_predict_branch(ip, cpu);
+
+    uint8_t prediction = 1;
+    if (bimodal_table[cpu][hash] >= (int8_t)((MAX_COUNTER + 1)/2)) {
+        prediction = global_prediction;
+    } else {
+        prediction = local_prediction;
+    }
+
+    return prediction;
+}
+
+void O3_CPU::last_branch_result(uint64_t ip, uint8_t taken)
+{
+    uint32_t hash = ip % BIMODAL_PRIME;
+
+    gselect_last_branch_result(ip, taken, cpu);
+    local_last_branch_result(ip, taken, cpu);
+    if (my_last_prediction_gs[cpu] == taken && my_last_prediction_local[cpu] != taken)
+        {
+		
+		bimodal_table[cpu][hash]++;
+		clamp(bimodal_table[cpu][hash]);
+	}
+    else if (my_last_prediction_gs[cpu] != taken && my_last_prediction_local[cpu] == taken){
+	    bimodal_table[cpu][hash]--;
+		clamp(bimodal_table[cpu][hash]);
+	}
+}
+
+// Always use branch predictor
+uint8_t O3_CPU::get_confidence(uint64_t ip, uint8_t taken){
+    return 1;
+}
