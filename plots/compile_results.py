@@ -1,6 +1,7 @@
 import os
 import matplotlib.pyplot as plt
 import pprint
+import numpy as np
 
 def get_stats(benchmark, size, model):
 	"""
@@ -55,7 +56,6 @@ def get_stats(benchmark, size, model):
 	# pprint.pprint(stats)
 	return stats
 
-
 # TODO: Add your models here!
 # model names <BCP_><BP>
 MODELS = [
@@ -109,11 +109,47 @@ for model in MODELS:
 		for benchmark in BENCHMARKS:
 			RESULTS[model][size][benchmark] = get_stats(benchmark, size, model)
 
-pprint.pprint(RESULTS)
-print("\nEXAMPLE for bpru_bimodal:")
-pprint.pprint(RESULTS["bpru_bimodal"])
+# pprint.pprint(RESULTS)
+# print("\nEXAMPLE for bpru_bimodal:")
+# pprint.pprint(RESULTS["bpru_bimodal"])
 
+# ----------------------------------- PLOTTING ----------------------------------- 
 # iterate through results plot as needed
 # generate a new plot for each size
-# for size in SIZES:
+
+# Get the xtick label names
+BENCHMARK_LABELS = [bm[bm.find('.')+1:] for bm in BENCHMARKS]
+BENCHMARK_LABELS = [bm[:bm.find('.')] for bm in BENCHMARK_LABELS]
+
+def get_plottable_stats(size, model, stat):
+	"""
+	Get all the stat values from the specified model and
+	model size
+	"""
+	model_stats = RESULTS[model][size]
+	stats = [model_stats[bm][stat] for bm in BENCHMARKS]
+	return stats
+
+# pprint.pprint(get_plottable_stats(6, "bimodal", "acc"))
+# pprint.pprint(get_plottable_stats(6, "bimodal", "mpki"))
+# pprint.pprint(get_plottable_stats(6, "bimodal", "rob"))
+
+# plot all the branch prediction accuracies for size 2^6 predictor models
+fig = plt.figure()
+ax = fig.add_subplot(1,1,1)
+X = np.arange(len(BENCHMARKS))
+W = 0.15
+for i,model in enumerate(MODELS):
+	acc_stats = get_plottable_stats(6, model, "acc")
+	ax.bar(X + i * W, acc_stats, color="C"+str(i), width=W)
+	plt.bar(0, 0, color="C"+str(i), label=model)
+
+ax.set_xticks(X + len(X)*W/2)
+ax.set_xticklabels(BENCHMARK_LABELS, rotation=10)
+plt.legend(bbox_to_anchor=(1,1), loc="upper left", prop={'size': 8})
+plt.title("Branch Predictor Accuracy (Model size of 2^6)")
+plt.ylabel("Accuracy %")
+plt.xlabel("Benchmark")
+plt.tight_layout()
+plt.show()
 
