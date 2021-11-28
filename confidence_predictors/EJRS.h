@@ -14,7 +14,7 @@ private:
 public:
     EJRS(){
         for(int i = 0; i < 4096; i++){
-            MDC[i] = 0;
+            MDC[i] = THRESHOLD;
         }
         GHR_size = 12;
         bh_vector = 0;
@@ -23,7 +23,7 @@ public:
 
     EJRS(int GHR_size){
         for(int i = 0; i < 4096; i++){
-            MDC[i] = 0;
+            MDC[i] = THRESHOLD;
         }
         this->GHR_size = GHR_size;
         bh_vector = 0;

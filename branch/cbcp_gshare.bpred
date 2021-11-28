@@ -4,18 +4,18 @@
 #include "../confidence_predictors/EJRS.h"
 #include "../confidence_predictors/UDCE.h"
 
-#define GLOBAL_HISTORY_LENGTH 12
+#define GLOBAL_HISTORY_LENGTH 24
 #define GLOBAL_HISTORY_MASK (1 << GLOBAL_HISTORY_LENGTH) - 1
 int branch_history_vector[NUM_CPUS];
 
 // Score:
-#define GS_HISTORY_TABLE_SIZE 4096
+#define GS_HISTORY_TABLE_SIZE 16777216
 int gs_history_table[NUM_CPUS][GS_HISTORY_TABLE_SIZE];
 int my_last_prediction[NUM_CPUS];
 
 SBI estimator1(2,2);
-EJRS estimator2;
-UDCE estimator3;
+EJRS estimator2(GLOBAL_HISTORY_LENGTH);
+UDCE estimator3(GLOBAL_HISTORY_LENGTH);
 CBCP composite(estimator1, estimator2, estimator3);
 
 void O3_CPU::initialize_branch_predictor()
@@ -74,8 +74,6 @@ void O3_CPU::last_branch_result(uint64_t ip, uint8_t taken)
     branch_history_vector[cpu] |= taken;
 }
 
-// Always use branch predictor
 uint8_t O3_CPU::get_confidence(uint64_t ip, uint8_t pred){
     return composite.get_confidence(ip, pred);
-    // return 1;
 }

@@ -39,7 +39,7 @@ public:
         uint64_t raw_output = raw_output_1 + raw_output_2 + raw_output_3;
 
         // Current threshold is 1
-        return (raw_output == 30 || raw_output == 33) ? 1 : 0;
+        return (raw_output >= 3) ? 1 : 0;
     }
 
     void update_confidence_estimators(uint64_t ip, uint8_t taken, int last_prediction){
