@@ -1,7 +1,7 @@
 #include "ooo_cpu.h"
 #include "../confidence_predictors/SBI.h"
-#define BIMODAL_TABLE_SIZE 64
-#define BIMODAL_PRIME 61
+#define BIMODAL_TABLE_SIZE 1024
+#define BIMODAL_PRIME 1021
 #define MAX_COUNTER 3
 int bimodal_table[NUM_CPUS][BIMODAL_TABLE_SIZE];
 #define CONF_THRESHOLD 2
@@ -34,4 +34,8 @@ void O3_CPU::last_branch_result(uint64_t ip, uint8_t taken)
     else if ((taken == 0) && (bimodal_table[cpu][hash] > 0))
         bimodal_table[cpu][hash]--;
     sbi.update_confidence(ip,taken);
+}
+
+uint8_t O3_CPU::get_confidence(uint64_t ip, uint8_t pred){
+    return sbi.get_confidence(ip, pred);
 }

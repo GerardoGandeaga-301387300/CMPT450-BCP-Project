@@ -4,7 +4,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#define CHT_SIZE 1024
+#define CHT_SIZE 16384
 
 inline uint16_t clamp(int16_t value, uint16_t max)
 {
