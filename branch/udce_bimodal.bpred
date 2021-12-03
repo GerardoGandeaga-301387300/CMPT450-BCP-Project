@@ -1,7 +1,4 @@
 #include "ooo_cpu.h"
-#include "../confidence_predictors/CBCP.h"
-#include "../confidence_predictors/BPRU.h"
-#include "../confidence_predictors/EJRS.h"
 #include "../confidence_predictors/UDCE.h"
 
 #define BIMODAL_TABLE_SIZE 64       // 2^6
@@ -12,26 +9,11 @@
 // #define BIMODAL_PRIME 16381
 // #define BIMODAL_TABLE_SIZE 16777216 // 2^24
 // #define BIMODAL_PRIME 16777213
-// #define MAX_COUNTER 3
+#define MAX_COUNTER 3
 int bimodal_table[NUM_CPUS][BIMODAL_TABLE_SIZE];
 int my_last_prediction[NUM_CPUS];
 
-#define RT_SIZE 1024
-#define MAX_COUNTER 7
-#define COUNTER_MASK 4
-#define COUNTER_SHIFT 2
-#define RT_SET_ASSOCIATIVITY 8
-#define RT_N_TAG_BITS 13
-BPRU estimator1(RT_SIZE, 
-                MAX_COUNTER, 
-                COUNTER_MASK, 
-                COUNTER_SHIFT, 
-                RT_SET_ASSOCIATIVITY, 
-                RT_N_TAG_BITS);
-EJRS estimator2(6);
-UDCE estimator3(6);
-// CBCP composite(estimator1, estimator2, estimator3);
-CBCP composite(estimator2, estimator3);
+UDCE estimator(24);
 
 void O3_CPU::initialize_branch_predictor()
 {
@@ -60,10 +42,10 @@ void O3_CPU::last_branch_result(uint64_t ip, uint8_t taken)
     else if ((taken == 0) && (bimodal_table[cpu][hash] > 0))
         bimodal_table[cpu][hash]--;
 
-    composite.update_confidence_estimators(ip, taken, my_last_prediction[cpu]);
+    estimator.update_table(ip, taken, my_last_prediction[cpu]);
 }
 
 uint8_t O3_CPU::get_confidence(uint64_t ip, uint8_t pred){
-    return composite.get_confidence(ip, pred);
+    return estimator.get_confidence(ip, pred);
 }
 
