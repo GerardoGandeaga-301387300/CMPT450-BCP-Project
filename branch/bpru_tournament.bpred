@@ -4,28 +4,36 @@
 
 // Config
 // GLOBAL ====================================
-// #define PROGRAM_COUNTER_LENGTH 5 // 6
-// #define GLOBAL_HISTORY_LENGTH 1
-// #define PROGRAM_COUNTER_LENGTH 8 // 10
+// SIZE: 6
+#define PROGRAM_COUNTER_LENGTH 5
+#define GLOBAL_HISTORY_LENGTH 1
+// SIZE: 10
+// #define PROGRAM_COUNTER_LENGTH 8
 // #define GLOBAL_HISTORY_LENGTH 2
-// #define PROGRAM_COUNTER_LENGTH 10 // 14
+// SIZE: 14
+// #define PROGRAM_COUNTER_LENGTH 10
 // #define GLOBAL_HISTORY_LENGTH 4
-#define PROGRAM_COUNTER_LENGTH 18 // 24
-#define GLOBAL_HISTORY_LENGTH 6
+// SIZE: 24
+// #define PROGRAM_COUNTER_LENGTH 18
+// #define GLOBAL_HISTORY_LENGTH 6
 // LOCAL =====================================
-// #define LOCAL_HISTORY_LENGTH 6
+#define LOCAL_HISTORY_LENGTH 6
 // #define LOCAL_HISTORY_LENGTH 10
 // #define LOCAL_HISTORY_LENGTH 14
-#define LOCAL_HISTORY_LENGTH 24
+// #define LOCAL_HISTORY_LENGTH 24
 // BIMODAL ===================================
-// #define BIMODAL_TABLE_SIZE 64       // 2^6
-// #define BIMODAL_PRIME 61
-// #define BIMODAL_TABLE_SIZE 1024     // 2^10
+// SIZE: 2^6
+#define BIMODAL_TABLE_SIZE 64
+#define BIMODAL_PRIME 61
+// SIZE: 2^10
+// #define BIMODAL_TABLE_SIZE 1024
 // #define BIMODAL_PRIME 1021
-// #define BIMODAL_TABLE_SIZE 16384    // 2^14
+// SIZE: 2^14
+// #define BIMODAL_TABLE_SIZE 16384
 // #define BIMODAL_PRIME 16381
-#define BIMODAL_TABLE_SIZE 16777216 // 2^24
-#define BIMODAL_PRIME 16777213
+// SIZE: 2^24
+// #define BIMODAL_TABLE_SIZE 16777216 
+// #define BIMODAL_PRIME 16777213
 
 // BPRU configuration
 #define RT_SIZE 1024

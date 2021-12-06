@@ -1,14 +1,18 @@
 #include "ooo_cpu.h"
 #include "../confidence_predictors/BPRU.h"
 
-// #define BIMODAL_TABLE_SIZE 64       // 2^6
-// #define BIMODAL_PRIME 61
-// #define BIMODAL_TABLE_SIZE 1024     // 2^10
+// SIZE: 2^6
+#define BIMODAL_TABLE_SIZE 64
+#define BIMODAL_PRIME 61
+// SIZE: 2^10
+// #define BIMODAL_TABLE_SIZE 1024
 // #define BIMODAL_PRIME 1021
-// #define BIMODAL_TABLE_SIZE 16384    // 2^14
+// SIZE: 2^14
+// #define BIMODAL_TABLE_SIZE 16384
 // #define BIMODAL_PRIME 16381
-#define BIMODAL_TABLE_SIZE 16777216 // 2^24
-#define BIMODAL_PRIME 16777213
+// SIZE: 2^24
+// #define BIMODAL_TABLE_SIZE 16777216 
+// #define BIMODAL_PRIME 16777213
 #define MAX_COUNTER 3
 int bimodal_table[NUM_CPUS][BIMODAL_TABLE_SIZE];
 

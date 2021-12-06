@@ -137,7 +137,7 @@ def get_plottable_stats(size, model, stat):
 # pprint.pprint(get_plottable_stats(6, "bimodal", "rob"))
 
 def create_table(file_name, size, stat):
-	file_name = "./plots/{}_{}_{}.png".format(file_name, stat, size)
+	file_name = "./plots/bpru/{}_{}_{}.png".format(file_name, stat, size)
 	fig, ax = plt.subplots()
 	fig.patch.set_visible(False)
 	ax.axis("off")
@@ -178,7 +178,7 @@ plt.ylabel("# of Branch IPs")
 plt.title("Unique Instructions Against Branch Combinations")
 plt.tight_layout()
 plt.legend()
-plt.savefig("./plots/benchmark_ip_hist.png", dpi=600)
+plt.savefig("./plots/bpru/benchmark_ip_hist.png", dpi=600)
 
 # actual BPRU plots
 create_table("brpu", 6,  "acc")
@@ -189,23 +189,5 @@ create_table("brpu", 6,  "ipc")
 create_table("brpu", 10, "ipc")
 create_table("brpu", 14, "ipc")
 create_table("brpu", 24, "ipc")
-
-# plot all the branch prediction accuracies for size 2^6 predictor models
-# fig = plt.figure()
-# ax = fig.add_subplot(1,1,1)
-# X = np.arange(len(BENCHMARKS))
-# W = 0.15
-
-# pprint.pprint(RESULTS["bpru_bimodal"][10])
-# pprint.pprint(RESULTS["bimodal"][10])
-
-# ax.set_xticks(X + len(X)*W/2)
-# ax.set_xticklabels(BENCHMARK_LABELS, rotation=10)
-# plt.legend(bbox_to_anchor=(1,1), loc="upper left", prop={'size': 8})
-# plt.title("Branch Predictor Accuracy (Model size of 2^10)")
-# plt.ylabel("Accuracy %")
-# plt.xlabel("Benchmark")
-# plt.tight_layout()
-# plt.show()
 
 #endregion 
