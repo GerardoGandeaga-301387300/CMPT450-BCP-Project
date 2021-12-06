@@ -1,5 +1,6 @@
 #include "ooo_cpu.h"
 #include <algorithm>
+#include "../confidence_predictors/SBI.h"
 
 // Config
 // GLOBAL ====================================
@@ -26,27 +27,10 @@
 // #define BIMODAL_TABLE_SIZE 16777216 // 2^24
 // #define BIMODAL_PRIME 16777213
 
-// CBCP
-#include "../confidence_predictors/CBCP.h"
-#include "../confidence_predictors/BPRU.h"
-#include "../confidence_predictors/EJRS.h"
-#include "../confidence_predictors/UDCE.h"
-#define RT_SIZE 1024
-#define MAX_COUNTER 7
-#define COUNTER_MASK 4
-#define COUNTER_SHIFT 2
-#define RT_SET_ASSOCIATIVITY 8
-#define RT_N_TAG_BITS 13
-BPRU estimator1(RT_SIZE, 
-                MAX_COUNTER, 
-                COUNTER_MASK, 
-                COUNTER_SHIFT, 
-                RT_SET_ASSOCIATIVITY, 
-                RT_N_TAG_BITS);
-EJRS estimator2(LOCAL_HISTORY_LENGTH);
-UDCE estimator3(LOCAL_HISTORY_LENGTH);
-// CBCP composite(estimator1, estimator2, estimator3;
-CBCP composite(estimator2, estimator3);
+#define CONF_THRESHOLD 2
+#define PRED_THRESHOLD 2
+
+SBI sbi(CONF_THRESHOLD, PRED_THRESHOLD);
 
 // ---------------------------------------------------------------------------Global Predictor---------------------------------------------------------------------------
 // PC = n
@@ -194,7 +178,6 @@ void local_last_branch_result(uint64_t ip, uint8_t taken, uint cpu)
 
 #define MAX_COUNTER 3
 int8_t bimodal_table[NUM_CPUS][BIMODAL_TABLE_SIZE];
-int my_last_prediction[NUM_CPUS];
 
 inline void clamp(int8_t& value) {
     if (value < 0) value = 0;
@@ -225,9 +208,7 @@ uint8_t O3_CPU::predict_branch(uint64_t ip)
         prediction = local_prediction;
     }
 
-    my_last_prediction[cpu] = prediction;
-
-    return prediction;
+    return sbi.predict(ip, prediction);
 }
 
 void O3_CPU::last_branch_result(uint64_t ip, uint8_t taken)
@@ -247,10 +228,10 @@ void O3_CPU::last_branch_result(uint64_t ip, uint8_t taken)
 		clamp(bimodal_table[cpu][hash]);
 	}
 
-    composite.update_confidence_estimators(ip, taken, my_last_prediction[cpu]);
+    sbi.update_confidence(ip, taken);
 }
 
-uint8_t O3_CPU::get_confidence(uint64_t ip, uint8_t pred){
-    return composite.get_confidence(ip, pred);
+// Always use branch predictor
+uint8_t O3_CPU::get_confidence(uint64_t ip, uint8_t taken){
+    return 1;
 }
-

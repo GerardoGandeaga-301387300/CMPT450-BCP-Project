@@ -1,28 +1,26 @@
 #include "ooo_cpu.h"
-#include "../confidence_predictors/SBI.h"
+#include "../confidence_predictors/UDCE.h"
 
-// 2^14: 79.6684%
 #define GLOBAL_HISTORY_LENGTH 6
 #define GLOBAL_HISTORY_MASK (1 << GLOBAL_HISTORY_LENGTH) - 1
 int branch_history_vector[NUM_CPUS];
 
+// Score:
 #define GS_HISTORY_TABLE_SIZE 64
 int gs_history_table[NUM_CPUS][GS_HISTORY_TABLE_SIZE];
 int my_last_prediction[NUM_CPUS];
 
-#define CONF_THRESHOLD 2
-#define PRED_THRESHOLD 2
+UDCE estimator(GLOBAL_HISTORY_LENGTH);
 
-SBI sbi(CONF_THRESHOLD, PRED_THRESHOLD);
 void O3_CPU::initialize_branch_predictor()
 {
     cout << "CPU " << cpu << " GSHARE branch predictor" << endl;
+
     branch_history_vector[cpu] = 0;
     my_last_prediction[cpu] = 0;
 
     for(int i=0; i<GS_HISTORY_TABLE_SIZE; i++)
-        gs_history_table[cpu][i] = 2; // 2 is slightly taken
-    
+        gs_history_table[cpu][i] = 2; // 2 is slightly taken    
 }
 
 unsigned int gs_table_hash(uint64_t ip, int bh_vector)
@@ -46,9 +44,9 @@ uint8_t O3_CPU::predict_branch(uint64_t ip)
     else
         prediction = 0;
 
-    prediction = sbi.predict(ip,prediction);
     my_last_prediction[cpu] = prediction;
-    return prediction;    
+
+    return prediction;
 }
 
 void O3_CPU::last_branch_result(uint64_t ip, uint8_t taken)
@@ -63,15 +61,13 @@ void O3_CPU::last_branch_result(uint64_t ip, uint8_t taken)
             gs_history_table[cpu][gs_hash]--;
     }
 
+    estimator.update_table(ip, taken, my_last_prediction[cpu]);
     // update branch history vector
     branch_history_vector[cpu] <<= 1;
     branch_history_vector[cpu] &= GLOBAL_HISTORY_MASK;
     branch_history_vector[cpu] |= taken;
-    sbi.update_confidence(ip,taken);
 }
 
-// Always use branch predictor
 uint8_t O3_CPU::get_confidence(uint64_t ip, uint8_t pred){
-    return 1;
+    return estimator.get_confidence(ip, pred);
 }
-
