@@ -1,5 +1,5 @@
 
-# CMPT 450: Branch Confidence Prediction
+# CMPT 450: Branch Confidence Prediction Run Instructions
 
 This project has an implementation of BPRU, SBI, JRS and a composite combination. These models were run on 5 different benchmarks.
 
