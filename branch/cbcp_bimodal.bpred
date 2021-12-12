@@ -30,8 +30,8 @@ BPRU estimator1(RT_SIZE,
                 RT_N_TAG_BITS);
 EJRS estimator2(6);
 UDCE estimator3(6);
-// CBCP composite(estimator1, estimator2, estimator3);
-CBCP composite(estimator2, estimator3);
+CBCP composite(estimator1, estimator2, estimator3);
+// CBCP composite(estimator2, estimator3);
 
 void O3_CPU::initialize_branch_predictor()
 {
